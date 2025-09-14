@@ -14,6 +14,22 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
+    // Path mapping for absolute imports
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/api/*": ["api/*"],
+      "@/config/*": ["api/v1/config/*"],
+      "@/controllers/*": ["api/v1/controllers/*"],
+      "@/middlewares/*": ["api/v1/middlewares/*"],
+      "@/models/*": ["api/v1/models/*"],
+      "@/routes/*": ["api/v1/routes/*"],
+      "@/services/*": ["api/v1/services/*"],
+      "@/types/*": ["api/v1/types/*"],
+      "@/utils/*": ["api/v1/utils/*"],
+      "@/validators/*": ["api/v1/validators/*"]
+    },
+
     // Best practices
     "strict": true,
     "skipLibCheck": true,
@@ -21,9 +37,17 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
 
+    // Import resolution preferences
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
