@@ -5,6 +5,7 @@ import {
   unhandledRejectionHandler,
 } from '@/middlewares/errorHandler'
 import { requestIdMiddleware } from '@/middlewares/requestId'
+import { getCorsMiddleware } from '@/config/corsConfig'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -23,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 app.use(requestIdMiddleware)
-
+app.use(getCorsMiddleware())
 app.use(helmet())
 app.use(
   compression({
