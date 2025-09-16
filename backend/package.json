@@ -16,8 +16,10 @@
     "@eslint/js": "^9.35.0",
     "@types/bun": "latest",
     "@types/compression": "^1.8.1",
+    "@types/connect-redis": "^0.0.22",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.3.1",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
@@ -33,10 +35,13 @@
   },
   "dependencies": {
     "compression": "^1.8.1",
+    "connect-redis": "7.1.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
     "helmet": "^8.1.0",
-    "http-errors": "^2.0.0"
+    "http-errors": "^2.0.0",
+    "ioredis": "^5.7.0"
   }
 }

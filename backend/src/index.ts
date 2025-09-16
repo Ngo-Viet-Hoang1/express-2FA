@@ -6,9 +6,11 @@ import {
 } from '@/middlewares/errorHandler'
 import { requestIdMiddleware } from '@/middlewares/requestId'
 import { getCorsMiddleware } from '@/config/corsConfig'
+import { getSessionConfig } from '@/config/sessionConfig'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
+import session from 'express-session'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import path from 'path'
@@ -26,6 +28,7 @@ const __dirname = path.dirname(__filename)
 app.use(requestIdMiddleware)
 app.use(getCorsMiddleware())
 app.use(helmet())
+app.use(session(getSessionConfig()))
 app.use(
   compression({
     filter: (req, res) => {
