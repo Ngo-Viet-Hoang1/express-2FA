@@ -1,3 +1,6 @@
+import { getCorsMiddleware } from '@/config/corsConfig'
+import logger from '@/config/logger'
+import { getSessionConfig } from '@/config/sessionConfig'
 import {
   globalErrorHandler,
   notFoundHandler,
@@ -5,8 +8,6 @@ import {
   unhandledRejectionHandler,
 } from '@/middlewares/errorHandler'
 import { requestIdMiddleware } from '@/middlewares/requestId'
-import { getCorsMiddleware } from '@/config/corsConfig'
-import { getSessionConfig } from '@/config/sessionConfig'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -58,5 +59,7 @@ unhandledRejectionHandler()
 uncaughtExceptionHandler()
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  logger.info(
+    `2 Factor Authentication app listening at http://localhost:${port}`,
+  )
 })

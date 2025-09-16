@@ -1,6 +1,7 @@
+import logger from '@/config/logger'
+import { AppError } from '@/models/AppError.js'
 import type { NextFunction, Request, Response } from 'express'
 import createError from 'http-errors'
-import { AppError } from '@/models/AppError.js'
 
 export const globalErrorHandler = (
   err: Error | AppError,
@@ -9,8 +10,7 @@ export const globalErrorHandler = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction,
 ): void => {
-  // eslint-disable-next-line no-console
-  console.error('Error occurred:', {
+  logger.error('Error occurred:', {
     requestId: req.requestId,
     message: err.message,
     stack: err.stack,
@@ -83,8 +83,7 @@ export const unhandledRejectionHandler = (): void => {
   process.on(
     'unhandledRejection',
     (reason: unknown, promise: Promise<unknown>) => {
-      // eslint-disable-next-line no-console
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+      logger.error('Unhandled Rejection at:', promise, 'reason:', reason)
       process.exit(1)
     },
   )
@@ -92,8 +91,7 @@ export const unhandledRejectionHandler = (): void => {
 
 export const uncaughtExceptionHandler = (): void => {
   process.on('uncaughtException', (err: Error) => {
-    // eslint-disable-next-line no-console
-    console.error('Uncaught Exception:', err)
+    logger.error('Uncaught Exception:', err)
     process.exit(1)
   })
 }
