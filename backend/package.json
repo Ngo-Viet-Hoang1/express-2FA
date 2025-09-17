@@ -28,12 +28,14 @@
     "globals": "^16.4.0",
     "jiti": "^2.5.1",
     "morgan": "^1.10.1",
+    "prisma": "^6.16.2",
     "typescript-eslint": "^8.43.0"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@prisma/client": "^6.16.2",
     "compression": "^1.8.1",
     "connect-redis": "7.1.1",
     "cors": "^2.8.5",

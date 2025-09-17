@@ -27,7 +27,8 @@
       "@/services/*": ["api/v1/services/*"],
       "@/types/*": ["api/v1/types/*"],
       "@/utils/*": ["api/v1/utils/*"],
-      "@/validators/*": ["api/v1/validators/*"]
+      "@/validators/*": ["api/v1/validators/*"],
+      "@/generated/*": ["../generated/*"]
     },
 
     // Best practices
