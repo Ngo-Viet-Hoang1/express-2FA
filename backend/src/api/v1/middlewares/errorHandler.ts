@@ -1,5 +1,6 @@
 import logger from '@/config/logger'
 import { AppError } from '@/models/AppError.js'
+import { formatZodError, isZodError } from '@/utils/zodErrorUtils.js'
 import type { NextFunction, Request, Response } from 'express'
 import createError from 'http-errors'
 
@@ -24,6 +25,14 @@ export const globalErrorHandler = (
   let statusCode = 500
   let message = 'Internal Server Error'
   let status = 'error'
+  let errors:
+    | Array<{
+        field: string
+        message: string
+        code: string
+        received?: unknown
+      }>
+    | undefined
 
   if (createError.isHttpError(err)) {
     statusCode = err.statusCode || err.status || 500
@@ -33,6 +42,11 @@ export const globalErrorHandler = (
     statusCode = err.statusCode
     message = err.message
     status = err.errorStatus
+  } else if (isZodError(err)) {
+    statusCode = 400
+    message = 'Validation Error'
+    status = 'fail'
+    errors = formatZodError(err)
   } else if (err.name === 'ValidationError') {
     statusCode = 400
     message = 'Validation Error'
@@ -60,6 +74,7 @@ export const globalErrorHandler = (
     status: status,
     message: message,
     requestId: req.requestId,
+    ...(errors && { errors }),
     ...(process.env.NODE_ENV === 'development' && {
       error: err.message,
       stack: err.stack,

@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "bcryptjs": "^3.0.2",
     "compression": "^1.8.1",
     "connect-redis": "7.1.1",
     "cors": "^2.8.5",
@@ -45,6 +46,7 @@
     "helmet": "^8.1.0",
     "http-errors": "^2.0.0",
     "ioredis": "^5.7.0",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^4.1.9"
   }
 }

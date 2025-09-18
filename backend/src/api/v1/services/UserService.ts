@@ -1,7 +1,9 @@
-import prisma from '../config/database'
 import type { User } from '@/generated/prisma'
 import { Prisma } from '@/generated/prisma'
+import prisma from '../config/database'
 import logger from '../config/logger'
+import { ErrorTypes } from '../models/AppError'
+import { PasswordUtils } from '../utils/passwordUtils'
 
 export interface CreateUserInput {
   email: string
@@ -21,21 +23,42 @@ export interface UpdateUserInput {
 export class UserService {
   static async createUser(data: CreateUserInput): Promise<User> {
     try {
-      return await prisma.user.create({
+      const hashedPassword = await PasswordUtils.hashPassword(data.password)
+      // Maybe validate email with bloom filter or Redis set
+
+      const user = await prisma.user.create({
         data: {
           email: data.email.toLowerCase().trim(),
-          password: data.password,
+          password: hashedPassword,
           name: data.name?.trim(),
         },
       })
+
+      return user
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new Error('Email already exists')
+          const target = error.meta?.target as string[]
+          if (target?.includes('email')) {
+            throw ErrorTypes.CONFLICT('Email already exists')
+          }
+          throw ErrorTypes.CONFLICT('Resource already exists')
         }
+
+        // Chỉ log Prisma error details để debug, không log general error
+        logger.debug('Prisma error creating user:', {
+          code: error.code,
+          message: error.message,
+          meta: error.meta,
+        })
+        throw ErrorTypes.INTERNAL_ERROR(
+          'Failed to create user due to database constraint',
+        )
       }
-      logger.error('Error creating user:', error)
-      throw new Error('Failed to create user')
+
+      throw ErrorTypes.INTERNAL_ERROR(
+        'An unexpected error occurred while creating user',
+      )
     }
   }
 
@@ -44,9 +67,39 @@ export class UserService {
       return await prisma.user.findUnique({
         where: { email: email.toLowerCase().trim() },
       })
-    } catch (error) {
-      logger.error('Error finding user by email:', error)
-      throw new Error('Failed to find user')
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR('Failed to find user')
+    }
+  }
+
+  static async findByEmailForAuth(email: string): Promise<User | null> {
+    try {
+      return await prisma.user.findUnique({
+        where: {
+          email: email.toLowerCase().trim(),
+          isActive: true,
+        },
+      })
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR('Failed to find user for authentication')
+    }
+  }
+
+  static async findByEmailPublic(
+    email: string,
+  ): Promise<Omit<User, 'password' | 'twoFactorSecret'> | null> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: email.toLowerCase().trim() },
+      })
+
+      if (!user) return null
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, twoFactorSecret, ...publicUser } = user
+      return publicUser
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR('Failed to find user')
     }
   }
 
@@ -55,9 +108,8 @@ export class UserService {
       return await prisma.user.findUnique({
         where: { id },
       })
-    } catch (error) {
-      logger.error('Error finding user by ID:', error)
-      throw new Error('Failed to find user')
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR('Failed to find user by ID')
     }
   }
 
@@ -70,11 +122,13 @@ export class UserService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          throw new Error('User not found')
+          throw ErrorTypes.NOT_FOUND('User not found')
+        }
+        if (error.code === 'P2002') {
+          throw ErrorTypes.CONFLICT('Update would create duplicate resource')
         }
       }
-      logger.error('Error updating user:', error)
-      throw new Error('Failed to update user')
+      throw ErrorTypes.INTERNAL_ERROR('Failed to update user')
     }
   }
 
@@ -84,8 +138,8 @@ export class UserService {
         where: { id },
         data: { lastLoginAt: new Date() },
       })
-    } catch (error) {
-      logger.error('Error updating last login:', error)
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR('Failed to update last login')
     }
   }
 
@@ -98,11 +152,11 @@ export class UserService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          throw new Error('User not found')
+          throw ErrorTypes.NOT_FOUND('User not found')
         }
       }
-      logger.error('Error deleting user:', error)
-      throw new Error('Failed to delete user')
+
+      throw ErrorTypes.INTERNAL_ERROR('Failed to delete user')
     }
   }
 }
