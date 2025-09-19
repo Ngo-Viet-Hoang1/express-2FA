@@ -24,7 +24,13 @@ export default class AuthController {
     })
   })
 
-  // login = catchAsync(async (req: Request, res: Response): Promise<void> => {})
+  login = catchAsync(async (req: Request, res: Response): Promise<void> => {
+    res.status(200).json({
+      success: true,
+      data: { user: req.user },
+      message: 'User logged in successfully',
+    })
+  })
 
   // authStatus = catchAsync(
   //   async (req: Request, res: Response): Promise<void> => {},

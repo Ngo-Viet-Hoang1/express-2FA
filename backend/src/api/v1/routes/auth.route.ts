@@ -1,7 +1,8 @@
 import { Router } from 'express'
+import passport from 'passport'
 import AuthController from '../controllers/AuthController'
 import { validateRequest } from '../middlewares/validationMiddleware'
-import { registerSchema } from '../validators/authValidator'
+import { loginSchema, registerSchema } from '../validators/authValidator'
 
 const authController = new AuthController()
 const router = Router()
@@ -11,7 +12,12 @@ router.post(
   validateRequest(registerSchema),
   authController.register,
 )
-// router.post('/login', validateRequest(loginSchema), authController.login)
+router.post(
+  '/login',
+  validateRequest(loginSchema),
+  passport.authenticate('local', { failureMessage: true }),
+  authController.login,
+)
 // router.get('/status', authController.authStatus)
 // router.post('/logout', authController.logout)
 

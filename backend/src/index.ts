@@ -14,6 +14,7 @@ import express from 'express'
 import session from 'express-session'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import passport from './api/v1/config/passportLocal'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import routes from './api/v1/routes'
@@ -30,6 +31,8 @@ app.use(requestIdMiddleware)
 app.use(getCorsMiddleware())
 app.use(helmet())
 app.use(session(getSessionConfig()))
+app.use(passport.initialize())
+app.use(passport.session())
 app.use(
   compression({
     filter: (req, res) => {
