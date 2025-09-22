@@ -26,7 +26,10 @@ passport.use(
 
         await UserService.updateLastLogin(user.id)
 
-        return cb(null, user)
+        // Remove sensitive fields before passing to callback
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _, twoFactorSecret, ...safeUser } = user
+        return cb(null, safeUser)
       } catch {
         return cb(ErrorTypes.INTERNAL_ERROR('Authentication failed'))
       }
@@ -43,14 +46,12 @@ passport.serializeUser((user, cb) => {
 passport.deserializeUser(async (id: number, cb) => {
   process.nextTick(async () => {
     try {
-      const user = await UserService.findById(id)
+      const user = await UserService.findByIdPublic(id)
       if (!user) {
         return cb(null, false)
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, twoFactorSecret, ...safeUser } = user
-      return cb(null, safeUser)
+      return cb(null, user)
     } catch {
       return cb(null, false)
     }

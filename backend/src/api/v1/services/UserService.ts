@@ -113,6 +113,24 @@ export class UserService {
     }
   }
 
+  static async findByIdPublic(
+    id: number,
+  ): Promise<Omit<User, 'password' | 'twoFactorSecret'> | null> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+      })
+
+      if (!user) return null
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, twoFactorSecret, ...publicUser } = user
+      return publicUser
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR('Failed to find user by ID')
+    }
+  }
+
   static async updateUser(id: number, data: UpdateUserInput): Promise<User> {
     try {
       return await prisma.user.update({
