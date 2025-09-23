@@ -21,11 +21,14 @@ router.post(
   passport.authenticate('local', { failureMessage: true }),
   authController.login,
 )
-router.get('/status', requireAuth, authController.authStatus)
-router.post('/logout', requireAuth, authController.logout)
 
-// router.post('/2fa/setup', requireAuth, authController.setup2FA)
-// router.post('/2fa/verify', requireAuth, authController.verify2FA)
-// router.post('/2fa/reset', requireAuth, authController.reset2FA)
+router.use(requireAuth)
+
+router.get('/status', authController.authStatus)
+router.post('/logout', authController.logout)
+
+router.post('/2fa/setup', authController.setup2FA)
+router.post('/2fa/verify', authController.verify2FA)
+router.post('/2fa/reset', authController.reset2FA)
 
 export default router

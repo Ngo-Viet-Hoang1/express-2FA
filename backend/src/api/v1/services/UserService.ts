@@ -16,7 +16,7 @@ export interface UpdateUserInput {
   emailVerified?: boolean
   isActive?: boolean
   isMfaActive?: boolean
-  twoFactorSecret?: string
+  twoFactorSecret?: string | null
   lastLoginAt?: Date
 }
 
@@ -131,7 +131,10 @@ export class UserService {
     }
   }
 
-  static async updateUser(id: number, data: UpdateUserInput): Promise<User> {
+  static async updateUser(
+    id: number,
+    data: UpdateUserInput,
+  ): Promise<Omit<User, 'password' | 'twoFactorSecret'>> {
     try {
       return await prisma.user.update({
         where: { id },
@@ -175,6 +178,19 @@ export class UserService {
       }
 
       throw ErrorTypes.INTERNAL_ERROR('Failed to delete user')
+    }
+  }
+
+  static async getTwoFactorSecretByUserId(
+    id: number,
+  ): Promise<string | null | undefined> {
+    try {
+      const user = await UserService.findById(id)
+      return user?.twoFactorSecret
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR(
+        'Failed to get two factor secret by userId',
+      )
     }
   }
 }

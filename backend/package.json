@@ -24,6 +24,8 @@
     "@types/node": "^24.3.1",
     "@types/passport": "^1.0.17",
     "@types/passport-local": "^1.0.38",
+    "@types/qrcode": "^1.5.5",
+    "@types/speakeasy": "^2.0.10",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
     "eslint": "^9.35.0",
@@ -50,6 +52,8 @@
     "ioredis": "^5.7.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0",
     "winston": "^3.17.0",
     "zod": "^4.1.9"
   }
