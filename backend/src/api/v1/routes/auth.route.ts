@@ -1,7 +1,11 @@
 import { Router } from 'express'
 import passport from 'passport'
 import AuthController from '../controllers/AuthController'
-import { requireAuth, requireGuest } from '../middlewares/authMiddleware'
+import {
+  authenticate,
+  // requireAuth,
+  requireGuest,
+} from '../middlewares/authMiddleware'
 import { validateRequest } from '../middlewares/validationMiddleware'
 import { loginSchema, registerSchema } from '../validators/authValidator'
 
@@ -18,11 +22,13 @@ router.post(
   '/login',
   requireGuest,
   validateRequest(loginSchema),
-  passport.authenticate('local', { failureMessage: true }),
+  passport.authenticate('local', { session: false, failureMessage: true }),
   authController.login,
 )
+router.post('/refresh', authController.refreshToken)
 
-router.use(requireAuth)
+// router.use(requireAuth)
+router.use(authenticate)
 
 router.get('/status', authController.authStatus)
 router.post('/logout', authController.logout)

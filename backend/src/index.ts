@@ -1,6 +1,6 @@
 import { getCorsMiddleware } from '@/config/corsConfig'
 import logger from '@/config/logger'
-import { getSessionConfig } from '@/config/sessionConfig'
+// import { getSessionConfig } from '@/config/sessionConfig'
 import {
   globalErrorHandler,
   notFoundHandler,
@@ -11,13 +11,16 @@ import { requestIdMiddleware } from '@/middlewares/requestId'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
-import session from 'express-session'
+// import session from 'express-session'
 import helmet from 'helmet'
 import morgan from 'morgan'
-import passport from './api/v1/config/passportLocal'
+import passport from 'passport'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import routes from './api/v1/routes'
+
+import '@/config/passportJwt'
+import '@/config/passportLocal'
 
 dotenv.config()
 
@@ -30,9 +33,9 @@ const __dirname = path.dirname(__filename)
 app.use(requestIdMiddleware)
 app.use(getCorsMiddleware())
 app.use(helmet())
-app.use(session(getSessionConfig()))
+// app.use(session(getSessionConfig()))
 app.use(passport.initialize())
-app.use(passport.session())
+// app.use(passport.session())
 app.use(
   compression({
     filter: (req, res) => {
