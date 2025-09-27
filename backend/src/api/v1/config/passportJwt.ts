@@ -1,6 +1,7 @@
 import passport from 'passport'
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt'
-import { UserService } from '../services/UserService'
+import { JWT_SCOPE } from '../constants/auth'
+import type { IJwtPayload } from '../types/IJwtPayload'
 
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -8,18 +9,28 @@ const opts = {
 }
 
 passport.use(
-  new JwtStrategy(opts, async (jwt_payload, done) => {
-    try {
-      const user = await UserService.findByIdPublic(jwt_payload.id)
-      if (user) {
-        return done(null, user)
-      } else {
-        return done(null, false)
-      }
-    } catch (error) {
-      return done(error, false)
-    }
+  new JwtStrategy(opts, async (jwt_payload: IJwtPayload, done) => {
+    if (jwt_payload.scope !== JWT_SCOPE.ACCESS)
+      return done(null, false, { message: 'MFA required' })
+
+    return done(null, jwt_payload)
   }),
+)
+
+passport.use(
+  'jwt-mfa',
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.JWT_MFA_SECRET || 'jwt-mfa-secret',
+    },
+    async (jwt_payload: IJwtPayload, done) => {
+      if (jwt_payload.scope !== JWT_SCOPE.MFA)
+        return done(null, false, { message: 'Invalid MFA token' })
+
+      return done(null, jwt_payload)
+    },
+  ),
 )
 
 export default passport

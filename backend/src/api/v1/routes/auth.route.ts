@@ -3,7 +3,7 @@ import passport from 'passport'
 import AuthController from '../controllers/AuthController'
 import {
   authenticate,
-  // requireAuth,
+  requireActiveUser,
   requireGuest,
 } from '../middlewares/authMiddleware'
 import { validateRequest } from '../middlewares/validationMiddleware'
@@ -28,13 +28,18 @@ router.post(
 router.post('/refresh', authController.refreshToken)
 
 // router.use(requireAuth)
-router.use(authenticate)
+router.post(
+  '/2fa/verify',
+  passport.authenticate('jwt-mfa', { session: false }),
+  authController.verify2FA,
+)
+
+router.use(authenticate, requireActiveUser)
 
 router.get('/status', authController.authStatus)
 router.post('/logout', authController.logout)
 
 router.post('/2fa/setup', authController.setup2FA)
-router.post('/2fa/verify', authController.verify2FA)
 router.post('/2fa/reset', authController.reset2FA)
 
 export default router

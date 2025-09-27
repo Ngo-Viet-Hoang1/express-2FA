@@ -113,6 +113,19 @@ export class UserService {
     }
   }
 
+  static async findByIdForAuth(id: number): Promise<User | null> {
+    try {
+      return await prisma.user.findUnique({
+        where: {
+          id,
+          isActive: true,
+        },
+      })
+    } catch {
+      throw ErrorTypes.INTERNAL_ERROR('Failed to find user for authentication')
+    }
+  }
+
   static async findByIdPublic(
     id: number,
   ): Promise<Omit<User, 'password' | 'twoFactorSecret'> | null> {
