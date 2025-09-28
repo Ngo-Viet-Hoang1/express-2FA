@@ -8,6 +8,11 @@ const redis = new Redis({
   maxRetriesPerRequest: 3,
   enableReadyCheck: false,
   lazyConnect: true,
+  connectTimeout: 10000,
+  commandTimeout: 5000,
+  family: 4,
+  keepAlive: 30000,
+  keyPrefix: process.env.REDIS_KEY_PREFIX || 'app:',
 })
 
 redis.on('error', (err) => {

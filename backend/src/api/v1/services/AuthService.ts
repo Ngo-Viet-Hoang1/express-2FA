@@ -1,5 +1,8 @@
+import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
+import redis from '../config/redis'
 import { JWT_SCOPE } from '../constants/auth'
+import { REFRESH_TOKEN_STATUS } from '../constants/refreshTokenStatus'
 import { ErrorTypes } from '../models/AppError'
 import type { IJwtPayload } from '../types/IJwtPayload'
 
@@ -73,6 +76,86 @@ export class AuthService {
       return decoded
     } catch {
       throw ErrorTypes.UNAUTHORIZED('Invalid MFA Token')
+    }
+  }
+
+  static hashRefreshToken(token: string): string {
+    const hash = crypto.createHash('sha256')
+    hash.update(token)
+    return hash.digest('hex')
+  }
+
+  static async storeRefreshTokenToRedis(
+    userId: number,
+    token: string,
+    ip: string = 'Unknown',
+    deviceInfo: string = 'Unknown',
+  ): Promise<void> {
+    const hashedToken = this.hashRefreshToken(token)
+    const key = `refreshToken:${hashedToken}`
+    const metadata = JSON.stringify({
+      userId,
+      ip,
+      deviceInfo,
+      status: REFRESH_TOKEN_STATUS.ACTIVE,
+      createdAt: new Date().toISOString(),
+      lastUsedAt: new Date().toISOString(),
+    })
+
+    const ttl = 7 * 24 * 60 * 60
+    await redis.set(key, metadata, 'EX', ttl)
+    await redis.sadd(`user:${userId}:refreshTokens`, hashedToken)
+
+    await redis.expire(`user:${userId}:refreshTokens`, ttl)
+  }
+
+  static async revokeRefreshToken(token: string): Promise<void> {
+    const hashedToken = this.hashRefreshToken(token)
+    const key = `refreshToken:${hashedToken}`
+    const metadata = await redis.get(key)
+
+    if (metadata) {
+      const parsedMetadata = JSON.parse(metadata)
+
+      // Option 1: Delete completely (for better security)
+      await redis.del(key)
+      await redis.srem(
+        `user:${parsedMetadata.userId}:refreshTokens`,
+        hashedToken,
+      )
+
+      // Option 2: Mark as revoked (if one needs audit trail)
+      // parsedMetadata.status = REFRESH_TOKEN_STATUS.REVOKED
+      // parsedMetadata.revokedAt = new Date().toISOString()
+      // await redis.set(key, JSON.stringify(parsedMetadata))
+      // await redis.srem(`user:${parsedMetadata.userId}:refreshTokens`, hashedToken)
+    }
+  }
+
+  static async revokeAllRefreshTokensForUser(userId: number): Promise<void> {
+    const tokens = await redis.smembers(`user:${userId}:refreshTokens`)
+    const pipeline = redis.pipeline()
+
+    tokens.forEach((hashedToken) => {
+      pipeline.del(`refreshToken:${hashedToken}`)
+    })
+    pipeline.del(`user:${userId}:refreshTokens`)
+
+    await pipeline.exec()
+  }
+
+  static async validateRefreshTokenInRedis(token: string): Promise<boolean> {
+    const hashedToken = this.hashRefreshToken(token)
+    const key = `refreshToken:${hashedToken}`
+    const metadata = await redis.get(key)
+
+    if (!metadata) return false
+
+    try {
+      const parsedMetadata = JSON.parse(metadata)
+      return parsedMetadata.status === REFRESH_TOKEN_STATUS.ACTIVE
+    } catch {
+      return false
     }
   }
 }

@@ -32,6 +32,9 @@ export default class AuthController {
 
   login = catchAsync(async (req: Request, res: Response): Promise<Response> => {
     const user = req.user as User
+    const ip =
+      (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress
+    const deviceInfo = req.get('User-Agent')
 
     if (user.isMfaActive) {
       const mfaToken = AuthService.generateMfaToken(user.id, user.email)
@@ -44,6 +47,13 @@ export default class AuthController {
 
     const accessToken = AuthService.generateAccessToken(user.id, user.email)
     const refreshToken = AuthService.generateRefreshToken(user.id)
+
+    await AuthService.storeRefreshTokenToRedis(
+      user.id,
+      refreshToken,
+      ip,
+      deviceInfo,
+    )
 
     res.cookie('refreshToken', refreshToken, {
       maxAge: 1000 * 60 * 60 * 24 * 7,
@@ -71,6 +81,17 @@ export default class AuthController {
   )
 
   logout = catchAsync(async (req: Request, res: Response): Promise<void> => {
+    const { refreshToken } = req.cookies
+
+    // Revoke refresh token if exists
+    if (refreshToken) {
+      try {
+        await AuthService.revokeRefreshToken(refreshToken)
+      } catch {
+        // Continue with logout even if token revocation fails
+      }
+    }
+
     res.clearCookie('refreshToken', {
       httpOnly: true,
       sameSite: 'lax',
@@ -141,6 +162,9 @@ export default class AuthController {
     const { id: userId } = req.user as IJwtPayload
     const user = await UserService.findByIdForAuth(userId)
     const base32secret = user?.twoFactorSecret
+    const ip =
+      (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress
+    const deviceInfo = req.get('User-Agent')
 
     if (!base32secret)
       throw ErrorTypes.NOT_FOUND('2FA is not set up for this user')
@@ -157,6 +181,13 @@ export default class AuthController {
     const accessToken = AuthService.generateAccessToken(user.id, user.email)
     const refreshToken = AuthService.generateRefreshToken(user.id)
     await UserService.updateUser(user.id, { isMfaActive: true })
+
+    await AuthService.storeRefreshTokenToRedis(
+      user.id,
+      refreshToken,
+      ip,
+      deviceInfo,
+    )
 
     res.cookie('refreshToken', refreshToken, {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
@@ -188,6 +219,9 @@ export default class AuthController {
   refreshToken = catchAsync(
     async (req: Request, res: Response): Promise<void> => {
       const { refreshToken } = req.cookies
+      const ip =
+        (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress
+      const deviceInfo = req.get('User-Agent')
 
       if (!refreshToken)
         throw ErrorTypes.UNAUTHORIZED('Refresh token not provided')
@@ -199,8 +233,22 @@ export default class AuthController {
       const user = await UserService.findByIdForAuth(decoded.id)
       if (!user) throw ErrorTypes.UNAUTHORIZED('User not found')
 
+      const isValidToken = await AuthService.validateRefreshTokenInRedis(
+        refreshToken,
+      )
+      if (!isValidToken)
+        throw ErrorTypes.UNAUTHORIZED('Invalid or revoked refresh token')
+
+      await AuthService.revokeRefreshToken(refreshToken)
+
       const accessToken = AuthService.generateAccessToken(user.id, user.email)
       const newRefreshToken = AuthService.generateRefreshToken(user.id)
+      await AuthService.storeRefreshTokenToRedis(
+        user.id,
+        newRefreshToken,
+        ip,
+        deviceInfo,
+      )
 
       res.cookie('refreshToken', newRefreshToken, {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
