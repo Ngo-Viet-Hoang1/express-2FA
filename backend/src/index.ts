@@ -12,6 +12,7 @@ import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
 // import session from 'express-session'
+import limiter from '@/middlewares/rateLimiter'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import passport from 'passport'
@@ -30,6 +31,7 @@ const port = process.env.PORT || 3000
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+app.use(limiter)
 app.use(requestIdMiddleware)
 app.use(getCorsMiddleware())
 app.use(helmet())
