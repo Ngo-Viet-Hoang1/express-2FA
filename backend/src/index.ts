@@ -22,6 +22,7 @@ import routes from './api/v1/routes'
 
 import '@/config/passportJwt'
 import '@/config/passportLocal'
+import '@/config/passportGoogle'
 
 dotenv.config()
 

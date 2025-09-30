@@ -3,6 +3,7 @@ import passport from 'passport'
 import AuthController from '../controllers/AuthController'
 import {
   authenticate,
+  googleAuthMiddleWare,
   requireActiveUser,
   requireGuest,
 } from '../middlewares/authMiddleware'
@@ -24,6 +25,15 @@ router.post(
   validateRequest(loginSchema),
   passport.authenticate('local', { session: false, failureMessage: true }),
   authController.login,
+)
+router.get(
+  '/login/federated/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] }),
+)
+router.get(
+  '/oauth2/redirect/google',
+  googleAuthMiddleWare,
+  authController.googleOAuthCallback,
 )
 router.post('/refresh', authController.refreshToken)
 

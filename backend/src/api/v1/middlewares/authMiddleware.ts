@@ -18,6 +18,28 @@ export const requireAuth = (
   next()
 }
 
+export const googleAuthMiddleWare = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  passport.authenticate(
+    'google',
+    {
+      session: false,
+      scope: ['profile', 'email'],
+      failureRedirect: '/auth/failure',
+    },
+    (err: Error | null, user: User) => {
+      if (err)
+        return next(ErrorTypes.INTERNAL_ERROR('Google authentication failed'))
+
+      req.user = user
+      next()
+    },
+  )(req, res, next)
+}
+
 export const requireGuest = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // if (req.user) {

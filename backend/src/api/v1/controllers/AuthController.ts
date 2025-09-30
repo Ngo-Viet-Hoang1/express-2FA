@@ -265,4 +265,54 @@ export default class AuthController {
       })
     },
   )
+
+  googleOAuthCallback = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const user = req.user as User
+      if (!user) throw ErrorTypes.UNAUTHORIZED('No user data from Google OAuth')
+
+      const ip =
+        (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress
+      const deviceInfo = req.get('User-Agent')
+
+      await UserService.updateLastLogin(user.id)
+
+      if (user.isMfaActive) {
+        const mfaToken = AuthService.generateMfaToken(user.id, user.email)
+        res.status(200).json({
+          success: true,
+          data: { mfaRequired: true, mfaToken },
+          message: 'MFA is required for this account',
+        })
+        return
+      }
+
+      const accessToken = AuthService.generateAccessToken(user.id, user.email)
+      const refreshToken = AuthService.generateRefreshToken(user.id)
+
+      await AuthService.storeRefreshTokenToRedis(
+        user.id,
+        refreshToken,
+        ip,
+        deviceInfo,
+      )
+
+      res.cookie('refreshToken', refreshToken, {
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+      })
+
+      // Redirect to frontend success page instead of JSON response for better UX
+      // const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+      // res.redirect(`${frontendUrl}/auth/success?token=${accessToken}`)
+      res.status(200).json({
+        success: true,
+        data: { accessToken },
+        message: 'User logged in successfully via Google OAuth',
+      })
+    },
+  )
 }

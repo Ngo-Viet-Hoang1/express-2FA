@@ -1,5 +1,6 @@
 import type { User } from '@/generated/prisma'
 import { Prisma } from '@/generated/prisma'
+import type { Profile } from 'passport-google-oauth20'
 import prisma from '../config/database'
 import logger from '../config/logger'
 import { ErrorTypes } from '../models/AppError'
@@ -9,6 +10,7 @@ export interface CreateUserInput {
   email: string
   password: string
   name?: string
+  googleId?: string
 }
 
 export interface UpdateUserInput {
@@ -204,6 +206,67 @@ export class UserService {
       throw ErrorTypes.INTERNAL_ERROR(
         'Failed to get two factor secret by userId',
       )
+    }
+  }
+
+  static async findOrCreateFromGoogleProfile(
+    profile: Profile,
+  ): Promise<User | undefined> {
+    try {
+      if (!profile.emails || profile.emails.length === 0)
+        throw ErrorTypes.VALIDATION_ERROR('Google profile has no email')
+
+      const email = profile.emails[0]?.value.toLowerCase().trim() || ''
+      const googleId = profile.id
+
+      let user = await prisma.user.findFirst({
+        where: { googleId },
+      })
+
+      if (!user) {
+        user = await this.findByEmail(email)
+
+        if (user) {
+          if (!user.googleId) {
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { googleId },
+            })
+          } else {
+            throw ErrorTypes.CONFLICT(
+              'Email is already associated with another Google account',
+            )
+          }
+        } else {
+          const randomPassword = await PasswordUtils.hashPassword(
+            Math.random().toString(36).substring(2, 15) +
+              Math.random().toString(36).substring(2, 15),
+          )
+
+          user = await prisma.user.create({
+            data: {
+              email,
+              password: randomPassword,
+              name: profile.displayName,
+              googleId,
+            },
+          })
+        }
+      }
+
+      return user
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002')
+          throw ErrorTypes.CONFLICT('Email already exists')
+
+        throw ErrorTypes.INTERNAL_ERROR(
+          'Failed to create user from Google profile due to database constraint',
+        )
+      }
+
+      // Re-throw other errors
+      throw error
     }
   }
 }
