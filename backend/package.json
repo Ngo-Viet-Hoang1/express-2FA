@@ -4,10 +4,11 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "bun run src/index.ts",
-    "dev": "bun run --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun --format esm",
-    "build:production": "bun build src/index.ts --outdir dist --target bun --format esm --minify",
+    "start": "bun run src/server.ts",
+    "dev": "bun run --watch src/server.ts",
+    "dev:worker": "bun run --watch src/api/v1/mq/worker.ts",
+    "build": "bun build src/server.ts --outdir dist --target bun --format esm",
+    "build:production": "bun build src/server.ts --outdir dist --target bun --format esm --minify",
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
@@ -16,6 +17,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
+    "@types/amqp-connection-manager": "^3.4.5",
+    "@types/amqplib": "^0.10.7",
     "@types/bun": "latest",
     "@types/compression": "^1.8.1",
     "@types/connect-redis": "^0.0.22",
@@ -49,6 +52,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "amqp-connection-manager": "^5.0.0",
+    "amqplib": "^0.10.9",
     "bcryptjs": "^3.0.2",
     "compression": "^1.8.1",
     "connect-redis": "7.1.1",
