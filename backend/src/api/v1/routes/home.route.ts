@@ -6,5 +6,6 @@ const homeController = new HomeController()
 
 router.get('/', homeController.index)
 router.get('/testmail', homeController.testMail)
+router.get('/testmail-rabbitmq', homeController.testRabbitMQSendMail)
 
 export default router

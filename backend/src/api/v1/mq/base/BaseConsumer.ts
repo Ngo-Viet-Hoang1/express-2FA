@@ -1,8 +1,9 @@
 import type { ChannelWrapper } from 'amqp-connection-manager'
 import type { ConsumeMessage } from 'amqplib'
 import logger from '../../config/logger'
-import type { QueueConfig, MessagePayload } from '../../types/IQueueConfig'
-import rabbitmqManager, { RabbitMQConfig } from '../connection'
+import { RabbitMQConfig } from '../../config/rabbitmq'
+import type { MessagePayload, QueueConfig } from '../../types/IQueueConfig'
+import rabbitmqManager from '../connection'
 
 export abstract class BaseConsumer<T> {
   protected abstract queueConfig: QueueConfig
