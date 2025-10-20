@@ -4,7 +4,6 @@ import AuthController from '../controllers/AuthController'
 import {
   authenticate,
   googleAuthMiddleWare,
-  requireActiveUser,
   requireGuest,
 } from '../middlewares/authMiddleware'
 import { validateRequest } from '../middlewares/validationMiddleware'
@@ -44,7 +43,11 @@ router.post(
   authController.verify2FA,
 )
 
-router.use(authenticate, requireActiveUser)
+router.get('/email/verify', authController.verifyEmailCode)
+
+router.use(authenticate)
+
+router.post('/email/send-verification', authController.sendEmailVerification)
 
 router.get('/status', authController.authStatus)
 router.post('/logout', authController.logout)
