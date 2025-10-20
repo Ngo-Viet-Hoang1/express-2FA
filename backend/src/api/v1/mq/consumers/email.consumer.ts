@@ -1,5 +1,6 @@
 import { RabbitMQConfig } from '../../config/rabbitmq'
-import { emailService, type EmailOptions } from '../../services/EmailService'
+import { emailService } from '../../services/EmailService'
+import type EmailOptions from '../../types/IEmailOptions'
 import { BaseConsumer } from '../base/BaseConsumer'
 
 export class EmailConsumer extends BaseConsumer<EmailOptions> {

@@ -8,8 +8,6 @@ async function startWorker(): Promise<void> {
 
     await rabbitmqManager.connect()
 
-    await emailConsumer.initialize()
-
     await emailConsumer.startConsuming()
 
     logger.info('Worker started successfully.')

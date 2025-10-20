@@ -68,17 +68,13 @@ export abstract class BaseConsumer<T> {
         attempts,
       })
 
-      this.channel!.ack(msg)
-
-      await new Promise((resolve) =>
-        setTimeout(resolve, RabbitMQConfig.retry.delay),
-      )
-
       await this.channel!.sendToQueue(
-        msg.fields.routingKey,
+        this.queueConfig.name,
         Buffer.from(JSON.stringify({ ...content, attempts })),
         { persistent: true },
       )
+
+      this.channel!.ack(msg)
     } else {
       logger.error(
         `💀 Max retries (${attempts}) reached. Moving to dead letter queue...`,

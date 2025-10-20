@@ -1,5 +1,5 @@
 import { RabbitMQConfig } from '../../config/rabbitmq'
-import type { EmailOptions } from '../../services/EmailService'
+import type EmailOptions from '../../types/IEmailOptions'
 import type { QueueConfig } from '../../types/IQueueConfig'
 import { BaseProducer } from '../base/BaseProducer'
 
