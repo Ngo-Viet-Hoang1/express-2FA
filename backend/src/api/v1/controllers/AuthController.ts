@@ -3,6 +3,8 @@ import type { Request, Response } from 'express'
 import QRCode from 'qrcode'
 import speakeasy from 'speakeasy'
 import { ErrorTypes } from '../models/AppError'
+import emailProducer from '../mq/producers/email.producer'
+import { emailService } from '../services/EmailService'
 import { UserService } from '../services/UserService'
 import type { IJwtPayload } from '../types/IJwtPayload'
 import { catchAsync } from '../utils/asyncHandler'
@@ -312,6 +314,57 @@ export default class AuthController {
         success: true,
         data: { accessToken },
         message: 'User logged in successfully via Google OAuth',
+      })
+    },
+  )
+
+  sendEmailVerification = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const { email } = req.body as { email?: string }
+      if (!email) throw ErrorTypes.VALIDATION_ERROR('Email is required')
+
+      const user = await UserService.findByEmail(email)
+      if (!user) throw ErrorTypes.NOT_FOUND('User not found')
+
+      if (user.emailVerified) {
+        res.status(200).json({
+          success: true,
+          message: 'Email is already verified',
+        })
+        return
+      }
+
+      const emailOptions = await emailService.createVerificationEmail(email)
+
+      await emailProducer.sendToQueue(emailOptions)
+
+      res.status(200).json({
+        success: true,
+        message: 'Verification email sent successfully',
+      })
+    },
+  )
+
+  verifyEmailCode = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const { code } = req.query as { code?: string }
+
+      if (!code)
+        throw ErrorTypes.VALIDATION_ERROR('Verification code is required')
+
+      const email = await emailService.getEmailByVerificationCode(code)
+      if (!email) throw ErrorTypes.UNAUTHORIZED('Invalid or expired code')
+
+      const user = await UserService.findByEmail(email)
+      if (!user) throw ErrorTypes.NOT_FOUND('User not found')
+
+      await UserService.updateUser(user.id, { emailVerified: true })
+
+      await emailService.deleteEmailVerificationCode(code)
+
+      res.status(200).json({
+        success: true,
+        message: 'Email verified successfully',
       })
     },
   )
