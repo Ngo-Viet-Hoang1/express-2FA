@@ -157,7 +157,7 @@ export class EmailService {
   async deleteEmailVerificationCode(
     verificationCode: string,
   ): Promise<string | null> {
-    const key = `verify:${verificationCode}`
+    const key = `verificationCode:${verificationCode}`
     const tx = redis.multi()
     tx.get(key)
     tx.del(key)

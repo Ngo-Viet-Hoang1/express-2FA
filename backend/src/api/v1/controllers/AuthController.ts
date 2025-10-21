@@ -335,12 +335,12 @@ export default class AuthController {
       }
 
       const emailOptions = await emailService.createVerificationEmail(email)
-
       await emailProducer.sendToQueue(emailOptions)
 
       res.status(200).json({
         success: true,
         message: 'Verification email sent successfully',
+        data: emailOptions,
       })
     },
   )

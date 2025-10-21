@@ -51,8 +51,9 @@
       </div>
       <p>Hello,</p>
       <p>
-        Thank you for registering with <%= process.env.APP_NAME || 'our
-        platform' %>. Please verify your email address to activate your account.
+        <!-- prettier-ignore -->
+        Thank you for registering with <%= process.env.APP_NAME || 'our platform' %>. 
+        Please verify your email address to activate your account.
       </p>
       <p style="text-align: center">
         <a href="<%= verificationLink %>" class="button"
