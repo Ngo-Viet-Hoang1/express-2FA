@@ -10,6 +10,7 @@ import type { IJwtPayload } from '../types/IJwtPayload'
 import { catchAsync } from '../utils/asyncHandler'
 import type { RegisterInput } from '../validators/authValidator'
 import { AuthService } from './../services/AuthService'
+import emailLimiter from '../services/EmailLimiter'
 
 export default class AuthController {
   register = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -323,6 +324,19 @@ export default class AuthController {
       const { email } = req.body as { email?: string }
       if (!email) throw ErrorTypes.VALIDATION_ERROR('Email is required')
 
+      const canSendEmail = await emailLimiter.canSendEmail(email)
+
+      if (!canSendEmail.allowed) {
+        res.status(429).json({
+          success: false,
+          message: 'Too many requests',
+          error: canSendEmail.reason,
+          retryAfter: canSendEmail.retryAfter,
+          remainingAttempts: canSendEmail.remainingAttempts,
+        })
+        return
+      }
+
       const user = await UserService.findByEmail(email)
       if (!user) throw ErrorTypes.NOT_FOUND('User not found')
 
@@ -336,6 +350,7 @@ export default class AuthController {
 
       const emailOptions = await emailService.createVerificationEmail(email)
       await emailProducer.sendToQueue(emailOptions)
+      await emailLimiter.recordSend(email)
 
       res.status(200).json({
         success: true,
@@ -361,6 +376,7 @@ export default class AuthController {
       await UserService.updateUser(user.id, { emailVerified: true })
 
       await emailService.deleteEmailVerificationCode(code)
+      await emailLimiter.reset(email)
 
       res.status(200).json({
         success: true,
