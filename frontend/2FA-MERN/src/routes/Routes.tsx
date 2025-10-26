@@ -1,4 +1,6 @@
 import RootLayout from '@/components/layouts/RootLayout'
+import ErrorPage from '@/pages/common/ErrorPage'
+import NotFound from '@/pages/common/NotFound'
 import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router'
 import ProtectedRoute from './ProtectedRoute'
@@ -11,6 +13,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     Component: RootLayout,
+    errorElement: <ErrorPage />,
     children: [
       {
         index: true,
@@ -30,6 +33,10 @@ const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    path: '*',
+    element: <NotFound />,
   },
 ])
 
