@@ -2,16 +2,16 @@ import js from '@eslint/js'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
-import globals from 'globals'
+import globals, { node } from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'node_modules', 'build', 'coverage', '.vite']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
-      tseslint.configs.recommended,
+      ...tseslint.configs.recommended,
       reactHooks.configs['recommended-latest'],
       reactRefresh.configs.vite,
       ...tseslint.configs.stylisticTypeChecked
@@ -25,8 +25,8 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn'],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+
       'no-console': 1,
       'no-lonely-if': 1,
       'no-trailing-spaces': 1,
@@ -34,7 +34,7 @@ export default defineConfig([
       'no-multiple-empty-lines': 1,
       'space-before-blocks': ['error', 'always'],
       'object-curly-spacing': [1, 'always'],
-      'indent': ['warn', 2],
+      'indent': ['warn', 2, { SwitchCase: 1 }],
       'semi': [1, 'never'],
       'quotes': ['error', 'single'],
       'array-bracket-spacing': 1,
