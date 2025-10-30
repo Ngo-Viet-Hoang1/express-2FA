@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 
 const NotFound = () => {
@@ -12,10 +13,15 @@ const NotFound = () => {
           Sorry, we couldn't find the page you're looking for.
         </p>
         <div className="mt-10 flex items-center justify-center gap-x-6">
-          <Link to="/">Go back home</Link>
-          <Link to="#">
-            Contact support <span aria-hidden="true">&rarr;</span>
-          </Link>
+          <Button asChild>
+            <Link to="/">Go back home</Link>
+          </Button>
+
+          <Button asChild variant="outline">
+            <Link to="#">
+              Contact support <span aria-hidden="true">&rarr;</span>
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

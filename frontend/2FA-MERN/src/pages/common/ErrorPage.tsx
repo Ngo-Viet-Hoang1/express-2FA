@@ -1,8 +1,9 @@
+import { Button } from '@/components/ui/button'
 import {
-  Link,
-  useRouteError,
   isRouteErrorResponse,
+  Link,
   useNavigate,
+  useRouteError,
 } from 'react-router-dom'
 
 const ErrorPage = () => {
@@ -52,19 +53,13 @@ const ErrorPage = () => {
         <p className="mb-8 text-lg text-gray-600">{errorMessage}</p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-md border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-          >
+          <Button onClick={() => navigate(-1)} variant="outline">
             ← Go back
-          </button>
+          </Button>
 
-          <Link
-            to="/"
-            className="rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
-          >
-            Go to homepage
-          </Link>
+          <Button asChild>
+            <Link to="/">Go to homepage</Link>
+          </Button>
         </div>
 
         {import.meta.env.NODE_ENV === 'development' &&

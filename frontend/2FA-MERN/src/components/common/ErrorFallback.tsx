@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Button } from '../ui/button'
 
 function ErrorFallback({
   error,
@@ -26,7 +27,9 @@ function ErrorFallback({
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <button onClick={resetErrorBoundary}>Try again</button>
+          <Button variant="outline" onClick={resetErrorBoundary}>
+            Try again
+          </Button>
           <Link to="/">Go back home</Link>
         </div>
       </div>
