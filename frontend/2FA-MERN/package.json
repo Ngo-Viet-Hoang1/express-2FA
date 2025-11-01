@@ -10,12 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@tailwindcss/vite": "^4.1.14",
     "axios": "^1.13.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.547.0",
+    "lucide-react": "^0.552.0",
+    "motion": "^12.23.24",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-error-boundary": "^6.0.0",

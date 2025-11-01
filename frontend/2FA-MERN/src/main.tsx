@@ -1,4 +1,5 @@
 import ErrorFallback from '@/components/common/ErrorFallback.tsx'
+import { ThemeProvider } from '@/providers/ThemeProvider.tsx'
 import { StrictMode, type ErrorInfo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -12,7 +13,9 @@ createRoot(document.getElementById('root')!).render(
       onError={(_error: Error, _info: ErrorInfo) => {}}
       onReset={() => {}}
     >
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </ErrorBoundary>
   </StrictMode>,
 )
