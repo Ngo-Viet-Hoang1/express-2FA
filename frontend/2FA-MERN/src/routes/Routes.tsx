@@ -2,6 +2,7 @@ import ErrorFallback from '@/components/common/ErrorFallback'
 import AdminLayout from '@/components/layouts/AdminLayout'
 import AuthLayout from '@/components/layouts/AuthLayout'
 import RootLayout from '@/components/layouts/RootLayout'
+import { ADMIN_ROUTES, ROUTES } from '@/constants'
 import AdminLogin from '@/pages/admin/AdminLogin'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
@@ -33,7 +34,7 @@ const withErrorBoundary = (
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: ROUTES.HOME,
     Component: RootLayout,
     errorElement: <ErrorPage />,
     children: [
@@ -42,14 +43,14 @@ const router = createBrowserRouter([
         element: withErrorBoundary(Home),
       },
       {
-        path: 'about',
+        path: ROUTES.ABOUT,
         element: <About />,
       },
       {
         element: <ProtectedRoute isAllowed redirectPath="/" />,
         children: [
           {
-            path: 'dashboard',
+            path: ROUTES.DASHBOARD,
             element: <Dashboard />,
           },
         ],
@@ -57,34 +58,34 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: '/auth',
+    path: ROUTES.AUTH.ROOT,
     Component: AuthLayout,
     errorElement: <ErrorPage />,
     children: [
       {
-        path: 'login',
+        path: ROUTES.AUTH.LOGIN,
         element: <Login />,
       },
       {
-        path: 'register',
+        path: ROUTES.AUTH.REGISTER,
         element: <Register />,
       },
     ],
   },
   {
-    path: '/admin',
+    path: ADMIN_ROUTES.ROOT,
     Component: AdminLayout,
     errorElement: <ErrorPage />,
     children: [
       {
         index: true,
-        element: <Navigate to="/admin/auth/dashboard" />,
+        element: <Navigate to={ADMIN_ROUTES.DASHBOARD} />,
       },
       {
-        element: <ProtectedRoute isAllowed redirectPath="/admin" />,
+        element: <ProtectedRoute isAllowed redirectPath={ADMIN_ROUTES.LOGIN} />,
         children: [
           {
-            path: 'dashboard',
+            path: ADMIN_ROUTES.DASHBOARD,
             element: <Dashboard />,
           },
         ],
@@ -92,12 +93,12 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: '/admin/auth',
+    path: ADMIN_ROUTES.AUTH.ROOT,
     Component: AuthLayout,
     errorElement: <ErrorPage />,
     children: [
       {
-        path: 'login',
+        path: ADMIN_ROUTES.AUTH.LOGIN,
         element: <AdminLogin />,
       },
     ],
