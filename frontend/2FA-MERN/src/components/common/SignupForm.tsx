@@ -11,35 +11,52 @@ import {
   Field,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
+  FieldSet,
 } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { AxiosError } from 'axios'
+import { useForm, type SubmitHandler } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Spinner } from '../ui/spinner'
+import FormField from './FormField'
+
+export interface SignUpInputs {
+  username: string
+  email: string
+  password: string
+  confirmPassword: string
+}
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const navigate = useNavigate()
-  const [username, setUsername] = useState<string | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
-  const [password, setPassword] = useState<string | null>(null)
-  const [confirmPassword, setConfirmPassword] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    setError,
+    trigger,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpInputs>()
 
-  const handleSubmitForm = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
-    if (password !== confirmPassword) {
-      return toast.error('Passwords do not match')
-    }
-
+  const onSubmit: SubmitHandler<SignUpInputs> = async ({
+    username,
+    email,
+    password,
+  }) => {
     try {
-      const res = await AuthService.register(email!, password!)
+      const res = await AuthService.register(email!, password!, username!)
       if (res?.data?.success) {
         toast.success('Registration successful! Please log in.')
         navigate('/auth/login')
       }
     } catch (error) {
-      if (error && typeof error === 'object' && 'message' in error) {
-        toast.error(String(error.message))
+      if (error instanceof AxiosError && error.response?.data?.errors) {
+        Object.keys(error.response.data.errors).forEach((field) => {
+          setError(field as keyof SignUpInputs, {
+            message: error.response?.data.errors[field],
+          })
+        })
+        toast.error(error.response.data.message || 'Registration failed. ')
       } else {
         toast.error('Registration failed. Please try again.')
       }
@@ -55,74 +72,68 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="name">Full Name</FieldLabel>
-              <Input
-                id="name"
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <FieldSet disabled={isSubmitting}>
+            <FieldGroup>
+              <FormField
+                id="full-name"
+                label="Full Name"
                 type="text"
                 placeholder="John Doe"
-                required
-                value={username || ''}
-                onChange={(e) => setUsername(e.target.value)}
+                register={register('username')}
+                error={errors.username?.message}
               />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
+              <FormField
                 id="email"
+                label="Email"
                 type="email"
                 placeholder="m@example.com"
-                required
-                value={email || ''}
-                onChange={(e) => setEmail(e.target.value)}
+                register={register('email', { required: 'Email is required' })}
+                error={errors.email?.message}
+                description="We'll use this to contact you. We will not share your email with anyone else."
               />
-              <FieldDescription>
-                We&apos;ll use this to contact you. We will not share your email
-                with anyone else.
-              </FieldDescription>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Input
+              <FormField
                 id="password"
+                label="Password"
                 type="password"
-                required
-                value={password || ''}
-                onChange={(e) => setPassword(e.target.value)}
+                register={register('password', {
+                  required: 'Password is required',
+                  minLength: {
+                    value: 8,
+                    message: 'Password must be at least 8 characters long',
+                  },
+                })}
+                description="Must be at least 8 characters long."
+                error={errors.password?.message}
               />
-              <FieldDescription>
-                Must be at least 8 characters long.
-              </FieldDescription>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="confirm-password">
-                Confirm Password
-              </FieldLabel>
-              <Input
+              <FormField
                 id="confirm-password"
+                label="Confirm Password"
                 type="password"
-                required
-                value={confirmPassword || ''}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                register={register('confirmPassword', {
+                  required: 'Confirm Password is required',
+                  validate: (value) =>
+                    value === watch('password') || 'Passwords do not match',
+                })}
+                description="Please confirm your password."
+                error={errors.confirmPassword?.message}
               />
-              <FieldDescription>Please confirm your password.</FieldDescription>
-            </Field>
-            <FieldGroup>
-              <Field>
-                <Button type="submit" onClick={handleSubmitForm}>
-                  Create Account
-                </Button>
-                <Button variant="outline" type="button">
-                  Sign up with Google
-                </Button>
-                <FieldDescription className="px-6 text-center">
-                  Already have an account? <Link to="auth/login">Sign in</Link>
-                </FieldDescription>
-              </Field>
+              <FieldGroup>
+                <Field>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Spinner />}Create Account
+                  </Button>
+                  <Button variant="outline" type="button">
+                    Sign up with Google
+                  </Button>
+                  <FieldDescription className="px-6 text-center">
+                    Already have an account?{' '}
+                    <Link to="/auth/login">Sign in</Link>
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
             </FieldGroup>
-          </FieldGroup>
+          </FieldSet>
         </form>
       </CardContent>
     </Card>
