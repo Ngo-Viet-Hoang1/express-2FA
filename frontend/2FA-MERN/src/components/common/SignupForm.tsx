@@ -13,19 +13,15 @@ import {
   FieldGroup,
   FieldSet,
 } from '@/components/ui/field'
-import { AxiosError } from 'axios'
+import { registerSchema, type SignUpInputs } from '@/schemas/auth.schema'
+import { handleApiError } from '@/utils/errorHanlders'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Spinner } from '../ui/spinner'
 import FormField from './FormField'
-
-export interface SignUpInputs {
-  username: string
-  email: string
-  password: string
-  confirmPassword: string
-}
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const navigate = useNavigate()
@@ -35,8 +31,20 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     setError,
     trigger,
     watch,
-    formState: { errors, isSubmitting },
-  } = useForm<SignUpInputs>()
+    formState: { errors, isSubmitting, touchedFields },
+  } = useForm<SignUpInputs>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onChange',
+  })
+
+  const password = watch('password')
+
+  useEffect(() => {
+    const { confirmPassword } = touchedFields
+    if (confirmPassword) {
+      trigger('confirmPassword')
+    }
+  }, [password, trigger, touchedFields])
 
   const onSubmit: SubmitHandler<SignUpInputs> = async ({
     username,
@@ -50,16 +58,8 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
         navigate('/auth/login')
       }
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.data?.errors) {
-        Object.keys(error.response.data.errors).forEach((field) => {
-          setError(field as keyof SignUpInputs, {
-            message: error.response?.data.errors[field],
-          })
-        })
-        toast.error(error.response.data.message || 'Registration failed. ')
-      } else {
-        toast.error('Registration failed. Please try again.')
-      }
+      handleApiError<SignUpInputs>(error, setError)
+      toast.error('Registration failed. Please try again.')
     }
   }
 
@@ -74,7 +74,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldSet disabled={isSubmitting}>
-            <FieldGroup>
+            <FieldGroup className="gap-3">
               <FormField
                 id="full-name"
                 label="Full Name"
@@ -88,7 +88,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 label="Email"
                 type="email"
                 placeholder="m@example.com"
-                register={register('email', { required: 'Email is required' })}
+                register={register('email')}
                 error={errors.email?.message}
                 description="We'll use this to contact you. We will not share your email with anyone else."
               />
@@ -96,13 +96,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 id="password"
                 label="Password"
                 type="password"
-                register={register('password', {
-                  required: 'Password is required',
-                  minLength: {
-                    value: 8,
-                    message: 'Password must be at least 8 characters long',
-                  },
-                })}
+                register={register('password')}
                 description="Must be at least 8 characters long."
                 error={errors.password?.message}
               />
@@ -110,11 +104,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 id="confirm-password"
                 label="Confirm Password"
                 type="password"
-                register={register('confirmPassword', {
-                  required: 'Confirm Password is required',
-                  validate: (value) =>
-                    value === watch('password') || 'Passwords do not match',
-                })}
+                register={register('confirmPassword')}
                 description="Please confirm your password."
                 error={errors.confirmPassword?.message}
               />
