@@ -22,7 +22,7 @@ export function handleApiError<T extends Record<string, any>>(
       })
     }
 
-    toast.error(data?.message || 'An error occurred. Please try again.')
+    toast.error(data?.message ?? 'An error occurred. Please try again.')
   } else {
     toast.error('An unexpected error occurred. Please try again.')
   }
