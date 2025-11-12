@@ -6,6 +6,7 @@ export const ROUTES = {
     ROOT: '/auth',
     LOGIN: 'login',
     REGISTER: 'register',
+    GOOGLECALLBACK: 'google-callback',
   },
 } as const
 

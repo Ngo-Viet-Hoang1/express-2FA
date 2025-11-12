@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import ErrorFallback from '@/components/common/ErrorFallback'
 import AdminLayout from '@/components/layouts/AdminLayout'
 import AuthLayout from '@/components/layouts/AuthLayout'
 import RootLayout from '@/components/layouts/RootLayout'
 import { ADMIN_ROUTES, ROUTES } from '@/constants'
 import AdminLogin from '@/pages/admin/AdminLogin'
+import GoogleCallback from '@/pages/auth/GoogleCallback'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import ErrorPage from '@/pages/common/ErrorPage'
@@ -22,8 +24,10 @@ const withErrorBoundary = (
   customFallback?: React.ComponentType<any>,
 ) => (
   <ErrorBoundary
-    FallbackComponent={customFallback || ErrorFallback}
-    onError={(_error, _errorInfo) => {}}
+    FallbackComponent={customFallback ?? ErrorFallback}
+    onError={(_error, _errorInfo) => {
+      /* empty */
+    }}
     onReset={() => {
       window.location.reload()
     }}
@@ -69,6 +73,10 @@ const router = createBrowserRouter([
       {
         path: ROUTES.AUTH.REGISTER,
         element: <Register />,
+      },
+      {
+        path: ROUTES.AUTH.GOOGLECALLBACK,
+        element: <GoogleCallback />,
       },
     ],
   },

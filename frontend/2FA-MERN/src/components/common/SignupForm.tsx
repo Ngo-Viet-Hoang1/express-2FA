@@ -63,6 +63,10 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     }
   }
 
+  const handleGoogleRegister = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/login/federated/google`
+  }
+
   return (
     <Card {...props}>
       <CardHeader>
@@ -113,7 +117,11 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <Spinner />}Create Account
                   </Button>
-                  <Button variant="outline" type="button">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={handleGoogleRegister}
+                  >
                     Sign up with Google
                   </Button>
                   <FieldDescription className="px-6 text-center">
