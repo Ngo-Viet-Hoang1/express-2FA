@@ -282,11 +282,13 @@ export default class AuthController {
 
       if (user.isMfaActive) {
         const mfaToken = AuthService.generateMfaToken(user.id, user.email)
-        res.status(200).json({
-          success: true,
-          data: { mfaRequired: true, mfaToken },
-          message: 'MFA is required for this account',
-        })
+        // res.status(200).json({
+        //   success: true,
+        //   data: { mfaRequired: true, mfaToken },
+        //   message: 'MFA is required for this account',
+        // })
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+        res.redirect(`${frontendUrl}/auth/mfa?token=${mfaToken}`)
         return
       }
 
@@ -309,13 +311,13 @@ export default class AuthController {
       })
 
       // Redirect to frontend success page instead of JSON response for better UX
-      // const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
-      // res.redirect(`${frontendUrl}/auth/success?token=${accessToken}`)
-      res.status(200).json({
-        success: true,
-        data: { accessToken },
-        message: 'User logged in successfully via Google OAuth',
-      })
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+      res.redirect(`${frontendUrl}/auth/google-callback?token=${accessToken}`)
+      // res.status(200).json({
+      //   success: true,
+      //   data: { accessToken },
+      //   message: 'User logged in successfully via Google OAuth',
+      // })
     },
   )
 
