@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { User } from '@/generated/prisma'
 import { Router } from 'express'
 import passport from 'passport'
 import AuthController from '../controllers/AuthController'
@@ -23,7 +25,29 @@ router.post(
   '/login',
   requireGuest,
   validateRequest(loginSchema),
-  passport.authenticate('local', { session: false, failureMessage: true }),
+  (req, res, next) => {
+    // Custom callback to handle authentication result
+    // passport local not throw error on invalid credentials but return message
+    passport.authenticate(
+      'local',
+      { session: false },
+      (err: any, user: User, info: any) => {
+        if (err) {
+          return next(err)
+        }
+
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: info?.message || 'Email hoặc mật khẩu không đúng',
+          })
+        }
+
+        req.user = user
+        next()
+      },
+    )(req, res, next)
+  },
   authController.login,
 )
 router.get(
@@ -44,7 +68,11 @@ router.post(
   authController.verify2FA,
 )
 
+router.get('/email/verify', authController.verifyEmailCode)
+
 router.use(authenticate, requireActiveUser)
+
+router.post('/email/send-verification', authController.sendEmailVerification)
 
 router.get('/status', authController.authStatus)
 router.post('/logout', authController.logout)

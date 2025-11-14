@@ -1,6 +1,7 @@
 /* eslint-disable indent */
 import type { Request, Response } from 'express'
 import prisma from '../config/database'
+import emailProducer from '../mq/producers/email.producer'
 import { emailService } from '../services/EmailService'
 import { catchAsync } from '../utils/asyncHandler'
 
@@ -60,6 +61,20 @@ export default class HomeController {
       success: true,
       data: result,
       message: 'Test email sent successfully',
+    })
+  })
+
+  testRabbitMQSendMail = catchAsync(async (req: Request, res: Response) => {
+    await emailProducer.sendToQueue({
+      to: 'test@gmail.com',
+      subject: 'Test Email ✔',
+      text: 'This is a test email from your application.',
+      html: '<b>This is a test email from your application.</b>',
+    })
+
+    res.status(200).json({
+      success: true,
+      message: 'Test email job sent to RabbitMQ successfully',
     })
   })
 }

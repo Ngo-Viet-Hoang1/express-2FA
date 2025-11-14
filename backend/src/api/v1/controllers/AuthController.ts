@@ -3,11 +3,14 @@ import type { Request, Response } from 'express'
 import QRCode from 'qrcode'
 import speakeasy from 'speakeasy'
 import { ErrorTypes } from '../models/AppError'
+import emailProducer from '../mq/producers/email.producer'
+import { emailService } from '../services/EmailService'
 import { UserService } from '../services/UserService'
 import type { IJwtPayload } from '../types/IJwtPayload'
 import { catchAsync } from '../utils/asyncHandler'
 import type { RegisterInput } from '../validators/authValidator'
 import { AuthService } from './../services/AuthService'
+import emailLimiter from '../services/EmailLimiter'
 
 export default class AuthController {
   register = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -279,11 +282,13 @@ export default class AuthController {
 
       if (user.isMfaActive) {
         const mfaToken = AuthService.generateMfaToken(user.id, user.email)
-        res.status(200).json({
-          success: true,
-          data: { mfaRequired: true, mfaToken },
-          message: 'MFA is required for this account',
-        })
+        // res.status(200).json({
+        //   success: true,
+        //   data: { mfaRequired: true, mfaToken },
+        //   message: 'MFA is required for this account',
+        // })
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+        res.redirect(`${frontendUrl}/auth/mfa?token=${mfaToken}`)
         return
       }
 
@@ -306,12 +311,78 @@ export default class AuthController {
       })
 
       // Redirect to frontend success page instead of JSON response for better UX
-      // const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
-      // res.redirect(`${frontendUrl}/auth/success?token=${accessToken}`)
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+      res.redirect(`${frontendUrl}/auth/google-callback?token=${accessToken}`)
+      // res.status(200).json({
+      //   success: true,
+      //   data: { accessToken },
+      //   message: 'User logged in successfully via Google OAuth',
+      // })
+    },
+  )
+
+  sendEmailVerification = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const { email } = req.body as { email?: string }
+      if (!email) throw ErrorTypes.VALIDATION_ERROR('Email is required')
+
+      const canSendEmail = await emailLimiter.canSendEmail(email)
+
+      if (!canSendEmail.allowed) {
+        res.status(429).json({
+          success: false,
+          message: 'Too many requests',
+          error: canSendEmail.reason,
+          retryAfter: canSendEmail.retryAfter,
+          remainingAttempts: canSendEmail.remainingAttempts,
+        })
+        return
+      }
+
+      const user = await UserService.findByEmail(email)
+      if (!user) throw ErrorTypes.NOT_FOUND('User not found')
+
+      if (user.emailVerified) {
+        res.status(200).json({
+          success: true,
+          message: 'Email is already verified',
+        })
+        return
+      }
+
+      const emailOptions = await emailService.createVerificationEmail(email)
+      await emailProducer.sendToQueue(emailOptions)
+      await emailLimiter.recordSend(email)
+
       res.status(200).json({
         success: true,
-        data: { accessToken },
-        message: 'User logged in successfully via Google OAuth',
+        message: 'Verification email sent successfully',
+        data: emailOptions,
+      })
+    },
+  )
+
+  verifyEmailCode = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const { code } = req.query as { code?: string }
+
+      if (!code)
+        throw ErrorTypes.VALIDATION_ERROR('Verification code is required')
+
+      const email = await emailService.getEmailByVerificationCode(code)
+      if (!email) throw ErrorTypes.UNAUTHORIZED('Invalid or expired code')
+
+      const user = await UserService.findByEmail(email)
+      if (!user) throw ErrorTypes.NOT_FOUND('User not found')
+
+      await UserService.updateUser(user.id, { emailVerified: true })
+
+      await emailService.deleteEmailVerificationCode(code)
+      await emailLimiter.reset(email)
+
+      res.status(200).json({
+        success: true,
+        message: 'Email verified successfully',
       })
     },
   )
