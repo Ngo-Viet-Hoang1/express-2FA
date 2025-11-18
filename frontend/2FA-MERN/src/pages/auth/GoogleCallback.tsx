@@ -1,9 +1,11 @@
 import { Spinner } from '@/components/ui/spinner'
+import useAuth from '@/hooks/useAuth'
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 function GoogleCallback() {
+  const { setAccessToken } = useAuth()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
@@ -18,12 +20,13 @@ function GoogleCallback() {
     }
 
     if (token) {
-      localStorage.setItem('access_token', token)
+      setAccessToken(token)
+      toast.success('Login successful via Google!')
       navigate('/dashboard')
     } else {
       navigate('/auth/login')
     }
-  }, [searchParams, navigate])
+  }, [searchParams, navigate, setAccessToken])
 
   return <Spinner />
 }
