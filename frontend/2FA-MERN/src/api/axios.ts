@@ -44,9 +44,16 @@ const instance = axios.create(config)
 
 instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    const tokenStr = localStorage.getItem('access_token')
+    if (tokenStr) {
+      try {
+        const token = JSON.parse(tokenStr)
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+      } catch {
+        config.headers.Authorization = `Bearer ${tokenStr}`
+      }
     }
 
     config.headers['X-Request-ID'] = generateRequestId()
