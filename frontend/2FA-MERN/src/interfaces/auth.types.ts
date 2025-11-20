@@ -7,14 +7,21 @@ export interface User {
 }
 
 export interface AuthState {
-  user?: User | null
-  loading: boolean
-  error?: string | null
-  setUser: (user: User | null) => void
-  logout?: () => void
-  login?: (userData: User, token: string) => void
+  user: User | null
   accessToken: string | null
+  loading: boolean
+  error: string | null
+  isInitialized: boolean
+}
+
+export interface AuthActions {
+  initFromStorage: () => void
+  setUser: (user: User | null) => void
   setAccessToken: (token: string | null) => void
+  login: (userData: User, token: string) => void
+  logout: () => void
+  fetchUser: () => Promise<void>
+  clearError: () => void
 }
 
 export interface Permission {

@@ -1,13 +1,21 @@
+import { useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
-import { AuthProvider } from './providers/AuthProvider'
 import router from './routes/Routes'
+import useAuthStore from './store/zustand/useAuthStore'
 
 function App() {
-  return (
-    <AuthProvider>
-      <RouterProvider router={router}></RouterProvider>
-    </AuthProvider>
-  )
+  const isInitialzed = useAuthStore((state) => state.isInitialized)
+  const initFromStorage = useAuthStore((state) => state.initFromStorage)
+
+  useEffect(() => {
+    initFromStorage()
+  }, [initFromStorage])
+
+  if (!isInitialzed) {
+    return <div>Initializing...</div>
+  }
+
+  return <RouterProvider router={router}></RouterProvider>
 }
 
 export default App
