@@ -5,6 +5,8 @@ import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Toaster } from 'sonner'
 import App from './App.tsx'
+
+import 'nprogress/nprogress.css'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(

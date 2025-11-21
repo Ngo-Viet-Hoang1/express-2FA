@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApiError } from '@/interfaces/ApiError'
+import { progress } from '@/utils/nprogress.util'
 import axios, {
   AxiosError,
   type AxiosResponse,
@@ -44,6 +45,10 @@ const instance = axios.create(config)
 
 instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (!config.headers?.['X-Skip-Progress']) {
+      progress.start()
+    }
+
     const tokenStr = localStorage.getItem('access_token')
     if (tokenStr) {
       try {
@@ -61,6 +66,7 @@ instance.interceptors.request.use(
     return config
   },
   (error) => {
+    progress.stop()
     return Promise.reject(error)
   },
 )
@@ -70,6 +76,8 @@ instance.interceptors.response.use(
     if (import.meta.env.VITE_NODE_ENV === 'development') {
       console.log('API Response:', response)
     }
+
+    progress.stop()
 
     return response
   },
@@ -135,6 +143,8 @@ instance.interceptors.response.use(
         isRefreshing = false
       }
     }
+
+    progress.stop()
 
     return Promise.reject(handleError(error))
   },
